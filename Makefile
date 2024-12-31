@@ -1,4 +1,4 @@
-.PHONY: configure distclean patch unpatch install clean remove start stop
+.PHONY: clone configure distclean patch unpatch install clean remove start stop
 USER=nobody
 GROUP=nobody
 PORT=4200
@@ -6,7 +6,7 @@ HOSTNAME=$$(hostname)
 
 all: shellinabox shellinabox/Makefile shellinabox/Makefile.org shellinabox/shellinaboxd shellinabox/shellinaboxd
 
-shellinabox:
+shellinabox clone:
 	git clone https://github.com/shellinabox/shellinabox
 
 shellinabox/Makefile configure:
@@ -38,6 +38,9 @@ shellinabox/shellinaboxd build:
 	cd shellinabox; \
 	sudo make install;
 
+man:
+	man shellinaboxd
+
 clean:
 	cd shellinabox; \
 	make $@;
@@ -47,11 +50,24 @@ uninstall:
 	sudo make $@;
 
 start:
-	sudo /usr/local/bin/shellinaboxd --user=$(USER) --group=$(GROUP) --port=$(PORT) --background=/var/run/shellinaboxd.pid
-	@echo URL: http://$(HOSTNAME):$(PORT)
+	@if ! test -f /var/run/shellinaboxd.pid; \
+	then \
+		echo "INFO Starting shellinabox"; \
+		sudo /usr/local/bin/shellinaboxd --user=$(USER) --group=$(GROUP) --port=$(PORT) --background=/var/run/shellinaboxd.pid; \
+		echo URL: http://$(HOSTNAME):$(PORT); \
+	else \
+		echo "WARN: Shellinabox already running on URL: http://$(HOSTNAME):$(PORT)"; \
+	fi
 
 stop:
-	sudo kill $$(cat /var/run/shellinaboxd.pid)
+	@if test -f /var/run/shellinaboxd.pid; \
+	then \
+		echo "INFO: Stopping shellinabox"; \
+		sudo kill $$(cat /var/run/shellinaboxd.pid); \
+		sudo rm /var/run/shellinaboxd.pid; \
+	else \
+		echo "WARN: Shellinabox not running"; \
+	fi
 
 remove:
 	rm -rf shellinabox
