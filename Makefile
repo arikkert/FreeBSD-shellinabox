@@ -2,6 +2,8 @@
 USER=nobody
 GROUP=nobody
 PORT=4200
+PIDFILE=/var/run/shellinaboxd.pid
+PID=$$(cat $(PIDFILE))
 HOSTNAME=$$(hostname)
 
 all: shellinabox shellinabox/Makefile shellinabox/Makefile.org shellinabox/shellinaboxd shellinabox/shellinaboxd
@@ -27,8 +29,10 @@ shellinabox/Makefile.org patch:
 	fi;
 
 unpatch:
-	rm -f shellinabox/Makefile.org
-	rm -f shellinabox/Makefile
+	if test shellinabox/Makefile.org; \
+	then \
+		mv shellinabox/Makefile.org shellinabox/Makefile; \
+	fi
 
 shellinabox/shellinaboxd build:
 	cd shellinabox; \
@@ -50,21 +54,21 @@ uninstall:
 	sudo make $@;
 
 start:
-	@if ! test -f /var/run/shellinaboxd.pid; \
+	@if ! test -f $(PIDFILE); \
 	then \
 		echo "INFO Starting shellinabox"; \
-		sudo /usr/local/bin/shellinaboxd --user=$(USER) --group=$(GROUP) --port=$(PORT) --background=/var/run/shellinaboxd.pid; \
+		sudo /usr/local/bin/shellinaboxd --user=$(USER) --group=$(GROUP) --port=$(PORT) --background=$(PIDFILE); \
 		echo URL: http://$(HOSTNAME):$(PORT); \
 	else \
-		echo "WARN: Shellinabox already running on URL: http://$(HOSTNAME):$(PORT)"; \
+		echo "WARN: Shellinabox already running on URL: http://$(HOSTNAME):$(PORT) as process $(PID)"; \
 	fi
 
 stop:
-	@if test -f /var/run/shellinaboxd.pid; \
+	@if test -f $(PIDFILE); \
 	then \
 		echo "INFO: Stopping shellinabox"; \
-		sudo kill $$(cat /var/run/shellinaboxd.pid); \
-		sudo rm /var/run/shellinaboxd.pid; \
+		sudo kill $(PID); \
+		sudo rm $(PIDFILE); \
 	else \
 		echo "WARN: Shellinabox not running"; \
 	fi
