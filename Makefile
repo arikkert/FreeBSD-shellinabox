@@ -2,8 +2,9 @@
 USER=nobody
 GROUP=nobody
 PORT=4200
+HOSTNAME=$$(hostname)
 
-all: shellinabox shellinabox/Makefile shellinabox/Makefile.org shellinabox/shellinaboxd shellinabox/shellinaboxd /usr/local/bin/shellinaboxd
+all: shellinabox shellinabox/Makefile shellinabox/Makefile.org shellinabox/shellinaboxd shellinabox/shellinaboxd
 
 shellinabox:
 	git clone https://github.com/shellinabox/shellinabox
@@ -29,8 +30,7 @@ unpatch:
 	rm -f shellinabox/Makefile.org
 	rm -f shellinabox/Makefile
 
-# build
-shellinabox/shellinaboxd:
+shellinabox/shellinaboxd build:
 	cd shellinabox; \
 	make;
 
@@ -46,11 +46,12 @@ uninstall:
 	cd shellinabox; \
 	sudo make $@;
 
-remove:
-	rm -rf shellinabox
-
 start:
-	/usr/local/bin/shellinaboxd --user=$(USER) --group=$(GROUP) --port=$(PORT) --background=/var/run/shellinaboxd.pid
+	sudo /usr/local/bin/shellinaboxd --user=$(USER) --group=$(GROUP) --port=$(PORT) --background=/var/run/shellinaboxd.pid
+	@echo URL: http://$(HOSTNAME):$(PORT)
 
 stop:
-	kill $$(cat /var/run/shellinaboxd.pid)
+	sudo kill $$(cat /var/run/shellinaboxd.pid)
+
+remove:
+	rm -rf shellinabox
