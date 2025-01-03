@@ -1,4 +1,4 @@
-.PHONY: clone configure distclean patch unpatch install clean remove start stop
+.PHONY: clone configure distclean patch unpatch install man clean remove start stop
 
 USER=nobody
 GROUP=nobody
@@ -16,7 +16,7 @@ $(REPO) clone:
 	git clone https://github.com/shellinabox/$(REPO)
 
 $(REPO)/Makefile configure: $(REPO)
-	cd $(REPO); \
+	@cd $(REPO); \
 	autoreconf -i; \
 	./configure
 
@@ -25,7 +25,7 @@ distclean: $(REPO)
 	make $@
 
 $(REPO)/Makefile.org patch: $(REPO)/Makefile
-	cd $(REPO); \
+	@cd $(REPO); \
 	if ! test -f Makefile.org; \
 	then \
 		cp -p Makefile Makefile.org; \
@@ -33,31 +33,31 @@ $(REPO)/Makefile.org patch: $(REPO)/Makefile
 	fi
 
 unpatch:
-	if test $(REPO)/Makefile.org; \
+	@if test $(REPO)/Makefile.org; \
 	then \
 		mv $(REPO)/Makefile.org $(REPO)/Makefile; \
 	fi
 
 $(REPO)/$(DAEMON) build: $(REPO)/Makefile.org
-	cd $(REPO); \
+	@cd $(REPO); \
 	make
 
 /usr/local/bin/$(DAEMON) install: $(REPO)/Makefile.org
-	cd $(REPO); \
+	@cd $(REPO); \
 	sudo make install
 
 man: /usr/local/bin/$(DAEMON)
-	man $(DAEMON)
+	@man $(DAEMON)
 
 clean:
-	if test -d $(REPO); \
+	@if test -f $(REPO)/Makefile; \
 	then \
 		cd $(REPO); \
 		sudo make $@; \
 	fi
 
 uninstall: $(REPO)
-	cd $(REPO); \
+	@cd $(REPO); \
 	sudo make $@
 
 start: /usr/local/bin/$(DAEMON)
