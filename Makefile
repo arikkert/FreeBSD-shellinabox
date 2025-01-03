@@ -3,28 +3,28 @@
 USER=nobody
 GROUP=nobody
 PORT=4200
-PIDFILE=/var/run/shellinaboxd.pid
 PID=$$(cat $(PIDFILE))
 HOSTNAME=$$(hostname)
 REPO=shellinabox
 PROGRAM=shellinabox
 DAEMON=$(PROGRAM)d
+PIDFILE=/var/run/$(DAEMON).pid
 
-all: $(REPO) $(REPO)/Makefile $(REPO)/Makefile.org $(REPO)/$(DAEMON) $(REPO)/$(DAEMON)
+all: build
 
 $(REPO) clone:
 	git clone https://github.com/shellinabox/$(REPO)
 
-$(REPO)/Makefile configure:
+$(REPO)/Makefile configure: $(REPO)
 	cd $(REPO); \
 	autoreconf -i; \
 	./configure
 
-distclean:
+distclean: $(REPO)
 	cd $(REPO); \
 	make $@
 
-$(REPO)/Makefile.org patch:
+$(REPO)/Makefile.org patch: $(REPO)/Makefile
 	cd $(REPO); \
 	if ! test -f Makefile.org; \
 	then \
@@ -38,26 +38,29 @@ unpatch:
 		mv $(REPO)/Makefile.org $(REPO)/Makefile; \
 	fi
 
-$(REPO)/$(DAEMON) build:
+$(REPO)/$(DAEMON) build: $(REPO)/Makefile.org
 	cd $(REPO); \
 	make
 
-/usr/local/bin/$(DAEMON) install:
+/usr/local/bin/$(DAEMON) install: $(REPO)/Makefile.org
 	cd $(REPO); \
 	sudo make install
 
-man:
+man: /usr/local/bin/$(DAEMON)
 	man $(DAEMON)
 
 clean:
-	cd $(REPO); \
-	make $@
+	if test -d $(REPO); \
+	then \
+		cd $(REPO); \
+		sudo make $@; \
+	fi
 
-uninstall:
+uninstall: $(REPO)
 	cd $(REPO); \
 	sudo make $@
 
-start:
+start: /usr/local/bin/$(DAEMON)
 	@if ! test -f $(PIDFILE); \
 	then \
 		echo "INFO Starting $(PROGRAM)"; \
@@ -90,5 +93,5 @@ status:
 		fi; \
 	fi
 
-remove rm:
+remove rm: clean
 	rm -rf $(REPO)
